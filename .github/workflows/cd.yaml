@@ -66,8 +66,7 @@ jobs:
             sudo chmod 666 /var/run/docker.sock
             echo "$DOCKER_PASSWORD" | docker login --username jisidro101 --password-stdin
             
-            cd /home/ubuntu/
-            cd nodejs
+            cd /home/ubuntu/app/nodejs
             docker pull jisidro101/nodejs:latest
             ./start.staging.sh
             
