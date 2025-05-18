@@ -69,7 +69,5 @@ jobs:
             cd /home/ubuntu/
             cd nodejs
             docker pull jisidro101/nodejs:latest
-            docker stop container_cicd_nodejs
-            docker rm container_cicd_nodejs
             ./start.staging.sh
             
