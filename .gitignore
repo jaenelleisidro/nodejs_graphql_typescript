@@ -1,10 +1,10 @@
-.docker_path.txt
+.docker_pat.txt
 .env
 .terraform.lock.hcl
 .terraform
 *.pem
 .tfstate
-*.tfvar
+*.tfvars
 nodejs/node_modules
 nodejs/generated
 nodejs/dist

@@ -1,0 +1,74 @@
+name: deployment workflow
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  push_to_registry:
+    name: Push Docker image to Docker Hub
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out the repo
+        uses: actions/checkout@v4
+
+      - name: Log in to Docker Hub
+        uses: docker/login-action@f4ef78c080cd8ba55a85445d5b36e214a81df20a
+        with:
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
+
+      - name: Extract metadata (tags, labels) for Docker
+        id: meta
+        uses: docker/metadata-action@9ec57ed1fcdbf14dcef7dfbe97b2010124a938b7
+        with:
+          images: jisidro101/nodejs
+
+      - name: Build and push Docker image
+        uses: docker/build-push-action@3b5e8027fcad23fda98b2e3ac259d8d67585f671
+        with:
+          context: ./nodejs
+          file: ./nodejs/Dockerfile
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+  deploy_staging:
+    needs: push_to_registry
+    environment: staging
+    name: 'Deploy to staging'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+        name: 'Checkout repository'
+
+      - uses: burnett01/rsync-deployments@23a557dceb19f9bb960ef40cf75cab5e9b37ec1f
+        name: 'sync yaml files'
+        with:
+          switches: -avzr --delete
+          path: .
+          remote_path: /home/ubuntu/app
+          remote_host: ${{ secrets.EC2_HOSTNAME }}
+          remote_user: ${{ secrets.EC2_REMOTE_USER }}
+          remote_key: ${{ secrets.EC2_SSH_PRIVATE_KEY }}
+       
+      - uses: JimCronqvist/action-ssh@7737f1192ddd8376686e9d6354dea44592c942bf
+        name: Execute SSH commmands on remote server
+        env:
+          DOCKER_PASSWORD: "${{ secrets.DOCKER_PASSWORD }}"
+        with:
+          hosts: '${{ secrets.EC2_REMOTE_USER }}@${{ secrets.EC2_HOSTNAME }}'
+          privateKey: ${{ secrets.EC2_SSH_PRIVATE_KEY }}
+          command: |
+            sudo chmod 666 /var/run/docker.sock
+            echo "$DOCKER_PASSWORD" | docker login --username jisidro101 --password-stdin
+            
+            cd /home/ubuntu/
+            cd nodejs
+            docker pull jisidro101/nodejs:latest
+            docker stop container_cicd_nodejs
+            docker rm container_cicd_nodejs
+            ./start.staging.sh
+            

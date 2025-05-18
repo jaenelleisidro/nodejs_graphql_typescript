@@ -1,0 +1,26 @@
+datasource db {
+  provider = "postgresql"
+  url      = env("POSTGRES_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+  output = "../generated/prisma_client"
+}
+
+enum Service {
+  DELIVERY
+  PICKUP
+  PAYMENT
+}
+
+model User {
+  id        Int      @id @default(autoincrement())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  email     String   @unique
+  name      String   
+  mobile    String
+  postcode  String
+  service   Service
+}

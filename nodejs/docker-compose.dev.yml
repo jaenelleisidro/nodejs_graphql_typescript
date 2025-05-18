@@ -1,0 +1,21 @@
+services:
+  nginx:
+    image: nginx:stable-alpine
+    ports:
+      - "3000:80"
+  node-app:
+    build:
+      context: .
+      args:
+        NODE_ENV: development
+    ports:
+      - "3001:80"
+    volumes:
+      - ./:/app
+    environment:
+      - NODE_ENV=development
+      - POSTGRES_URL=postgresql://postgres:prisma@postgres:5432/postgres?schema=public
+    command: npm run start
+  postgres:
+    ports:
+      - "5432:5432"
