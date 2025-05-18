@@ -9,7 +9,7 @@ services:
       - node-app
   node-app:
     volumes:
-      - ./:/app:ro
+      - ./:/app
       - /app/node_modules
       - /app/dist
       - /app/generated
